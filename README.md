@@ -1,10 +1,16 @@
 # rf control monitor
 
-TODOs:
+## TODOs
 
 - add remote address to EEPROM.
 - connect push button to add new remote.
 - remove remote.
+
+## Button
+
+here is the funtionality diagram for external button:
+
+![button-functionality](button.drawio.png)
 
 <!-- 
 commit notes:
