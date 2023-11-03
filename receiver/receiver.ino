@@ -58,6 +58,8 @@ void loop() {
 
 
 bool is_valid_addr(unsigned long remoteAddress) {
+  if(remoteAddress == 0) return false;
+
   for (unsigned long i : rmAddrs) {
     if (i == remoteAddress)
       return true;
