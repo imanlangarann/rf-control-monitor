@@ -1,7 +1,11 @@
 #include <RCSwitch.h>
 
-#define debunce 150
 #define indicator 13
+#define btn 8
+
+#define btn_debaunce 50
+#define input_signal_debaunce 150
+#define long_press_debaunce 5000
 
 enum mode { read,
             learn,
@@ -12,9 +16,20 @@ short leds[] = { 4, 5, 6, 7 };
 bool ledStt[] = { 0, 0, 0, 0 };
 unsigned long rmAddrs[10] = { 21532 };
 
+bool btnState = true;
+bool lastBtnState = true;
+bool reading = true;
+
+unsigned long lastDebounceTime = 0;
+unsigned long startLongPress = 0;
+
+
 RCSwitch mySwitch = RCSwitch();
 short dec2binWzerofill(unsigned long *Dec);
 void checkIndicator();
+void checkBtn(bool *isPressed, bool *isLongPressed);
+void goto_mode(byte m);
+
 
 short i = 0;
 
@@ -29,6 +44,7 @@ void setup() {
   }
 
   pinMode(indicator, OUTPUT);
+  pinMode(btn, INPUT_PULLUP);
 
   Serial.println("setup...");
 }
@@ -38,13 +54,47 @@ unsigned long remote_val = 0;
 
 long last_sig = 0;
 
+bool isPressed = false, isLongPressed = false;
+
 void loop() {
 
   checkIndicator();
 
+  ///////////////////
+  // isPressed = false;
+  // isLongPressed = false;
+  // checkBtn(&isPressed, &isLongPressed);
+
+  // if (isPressed) { Serial.println("pressed"); }
+  // if (isLongPressed) {
+  //   Serial.println("long pressed");
+  //   gotowhile();
+  // }
+  ///////////////////
+
+
   if (mode == read) {
+
+    isPressed = false;
+    checkBtn(&isPressed, &isLongPressed);
+    if (isPressed) {
+      startLongPress = millis();
+      digitalWrite(indicator, 1);
+      while (millis() - startLongPress < 3000) {
+        isPressed = false;
+        checkBtn(&isPressed, &isLongPressed);
+        if (isPressed) {
+          goto_mode(forget);
+          break;
+        }
+      }
+      if (mode == read)
+        goto_mode(learn);
+      digitalWrite(indicator, 0);
+    }
+
     if (mySwitch.available()) {
-      if (millis() - last_sig > debunce) {
+      if (millis() - last_sig > input_signal_debaunce) {
         last_sig = millis();
 
         remote_val = mySwitch.getReceivedValue();
@@ -67,6 +117,57 @@ void loop() {
       mySwitch.resetAvailable();
     }
   }
+}
+
+void gotowhile() {
+  while (!digitalRead(btn))
+    ;
+}
+
+
+void goto_mode(byte m) {
+  mode = m;
+  Serial.println(mode);
+}
+
+
+void checkBtn(bool *isPressed, bool *isLongPressed) {
+  reading = digitalRead(btn);
+  if (reading != lastBtnState)
+    lastDebounceTime = millis();
+
+
+  if ((millis() - lastDebounceTime) > btn_debaunce) {
+
+    if (reading != btnState) {
+      btnState = reading;
+      // once its reed this will run
+
+      if (!btnState) {
+        // Serial.println("press");
+        *isPressed = true;
+        startLongPress = millis();
+        // go_next_mode();
+      }
+      // else {
+      //   Serial.println("release");
+      // }
+    }
+  }
+
+  if (!btnState) {
+    if (millis() - startLongPress > long_press_debaunce) {  // long press
+      // Serial.println("long");
+      *isLongPressed = true;
+
+      // while (!digitalRead(btn));
+
+      btnState = true;
+      Serial.println("release");
+    }
+  }
+
+  lastBtnState = reading;
 }
 
 
@@ -159,35 +260,3 @@ short dec2binWzerofill(unsigned long *Dec) {
 
   return out;
 }
-
-/*
-new codes for long press from gpt
-
-const int buttonPin = 2;
-int buttonState = 0;
-unsigned long startTime = 0;
-
-void setup() {
-  pinMode(buttonPin, INPUT);
-  Serial.begin(9600);
-}
-
-void loop() {
-  buttonState = digitalRead(buttonPin);
-  if (buttonState == HIGH) {
-    startTime = millis();
-    while (millis() - startTime < 10000) {
-      buttonState = digitalRead(buttonPin);
-      if (buttonState == LOW) {
-        Serial.println("Button released before 10 seconds.");
-        break;
-      }
-    }
-    if (buttonState == HIGH) {
-      Serial.println("Button pressed for 10 seconds.");
-    }
-  }
-}
-
-
-*/

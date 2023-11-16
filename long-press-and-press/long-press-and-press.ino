@@ -7,8 +7,6 @@ bool lastBtnState = true;
 bool reading = true;
 
 unsigned long lastDebounceTime = 0;
-
-unsigned long start_press = 0;
 unsigned long startLongPress = 0;
 
 
