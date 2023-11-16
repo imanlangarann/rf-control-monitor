@@ -159,3 +159,35 @@ short dec2binWzerofill(unsigned long *Dec) {
 
   return out;
 }
+
+/*
+new codes for long press from gpt
+
+const int buttonPin = 2;
+int buttonState = 0;
+unsigned long startTime = 0;
+
+void setup() {
+  pinMode(buttonPin, INPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  buttonState = digitalRead(buttonPin);
+  if (buttonState == HIGH) {
+    startTime = millis();
+    while (millis() - startTime < 10000) {
+      buttonState = digitalRead(buttonPin);
+      if (buttonState == LOW) {
+        Serial.println("Button released before 10 seconds.");
+        break;
+      }
+    }
+    if (buttonState == HIGH) {
+      Serial.println("Button pressed for 10 seconds.");
+    }
+  }
+}
+
+
+*/
