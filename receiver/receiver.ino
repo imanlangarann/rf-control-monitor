@@ -1,5 +1,6 @@
 #include <RCSwitch.h>
 #include <EEPROM.h>
+#include <avr/wdt.h>
 
 #define indicator 13
 #define btn 8
@@ -54,7 +55,12 @@ void setup() {
 
   Serial.println("setup...");
 
+  wdt_enable(WDTO_500MS);
 }
+
+
+
+
 
 short key = 0;
 unsigned long remote_val = 0;
@@ -93,6 +99,9 @@ void loop() {
       startLongPress = millis();
       digitalWrite(indicator, 1);
       while (millis() - startLongPress < 3000) {
+        
+        wdt_reset();
+
         isPressed = false;
         checkBtn(&isPressed, &isLongPressed);
         if (isPressed) {
@@ -142,6 +151,7 @@ void loop() {
     if (isPressed) {
       // goto_mode(forgetAll);
       while (!digitalRead(btn)) {
+        wdt_reset();
 
         isLongPressed = false;
         checkBtn(&isPressed, &isLongPressed);
@@ -150,7 +160,7 @@ void loop() {
           remove_all_address();
           digitalWrite(indicator, 1);
           while (!digitalRead(btn))
-            ;
+            wdt_reset();
           digitalWrite(indicator, 0);
           goto_mode(read);
           break;
@@ -204,6 +214,9 @@ void loop() {
     checkBtn(&isPressed, &isLongPressed);
     if (isPressed) {
       while (!digitalRead(btn)) {
+
+        wdt_reset();
+
         if (millis() - last_on > 100) {
           last_on = millis();
 
@@ -240,6 +253,10 @@ void loop() {
       mySwitch.resetAvailable();
     }
   }
+
+
+  wdt_reset();
+
 }
 
 
@@ -252,10 +269,10 @@ void checkIncativity() {
   }
 }
 
-void gotowhile() {
-  while (!digitalRead(btn))
-    ;
-}
+// void gotowhile() {
+//   while (!digitalRead(btn))
+//     ;
+// }
 
 
 void goto_mode(byte m) {
