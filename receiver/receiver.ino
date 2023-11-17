@@ -1,4 +1,5 @@
 #include <RCSwitch.h>
+#include <EEPROM.h>
 
 #define indicator 13
 #define btn 8
@@ -15,7 +16,7 @@ enum mode { read,
 
 short leds[] = { 4, 5, 6, 7 };
 bool ledStt[] = { 0, 0, 0, 0 };
-unsigned long rmAddrs[number_of_addresses] = { 21532 };
+unsigned long rmAddrs[number_of_addresses] = {};
 
 bool btnState = true;
 bool lastBtnState = true;
@@ -43,6 +44,10 @@ void setup() {
     pinMode(leds[i], OUTPUT);
     digitalWrite(leds[i], 0);
   }
+
+  /////////read remote addresses from eeprom///////////
+  EEPROM.get(0, rmAddrs);
+  /////////////////////////////////////////////////////
 
   pinMode(indicator, OUTPUT);
   pinMode(btn, INPUT_PULLUP);
@@ -314,6 +319,7 @@ void add_address(unsigned long new_address) {
     for (i = 0; i < number_of_addresses; i++) {
       if (rmAddrs[i] == 0) {
         rmAddrs[i] = new_address;
+        // EEPROM.put(0, rmAddrs);
         break;
       }
     }
@@ -324,6 +330,7 @@ void remove_address(unsigned long remote_address) {
   for (i = 0; i < number_of_addresses; i++) {
     if (rmAddrs[i] == remote_address) {
       rmAddrs[i] = 0;
+      // EEPROM.put(0, rmAddrs);
       break;
     }
   }
@@ -333,6 +340,7 @@ void remove_all_address() {
   for (byte i = 0; i < number_of_addresses; i++) {
     rmAddrs[i] = 0;
   }
+  // EEPROM.put(0, rmAddrs);
 }
 
 

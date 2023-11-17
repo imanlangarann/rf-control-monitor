@@ -2,9 +2,10 @@
 
 ## TODOs
 
-- read from EEPROM.
-- write to EEPROM.
-- send data ...
+- [ ] watchdog timer.
+- [ ] send data ...
+- [x] read from EEPROM. (implemented but commented)
+- [x] write to EEPROM. (implemented but commented)
 
 ## Button
 

@@ -12,22 +12,15 @@ using namespace std;
 short dec2binWzerofill(int *Dec);
 short dec2binWzerofill2(int *Dec); // personlized function
 bool *dec2binWzerofill3(int *Dec);
+    
+#define number_of_addresses 10
+
+unsigned long rmAddrs[number_of_addresses] = { 21532 };
 
 int main()
 {
 
-    // int decimal = 4395553; //0
-    // int decimal = 4395555; //1
-    int decimal = 4395556; // 2
-    // int decimal = 4395557; //3 ??
-    int decimal2 = decimal;
-
-    // 010000110001001000100100 => 274722 & 0100
-
-    // cout << dec2binWzerofill2(&decimal);
-    bool *cmd = dec2binWzerofill3(&decimal);
-    cout << cmd[0] << " " << cmd[1] << " " << decimal << "\n";
-    cout << dec2binWzerofill(&decimal2) << " "<< decimal2;
+    cout << sizeof(rmAddrs);
 
     return 0;
 }
