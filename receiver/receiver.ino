@@ -54,6 +54,7 @@ void setup() {
 
   Serial.begin(9600);
   mySwitch.enableReceive(0);
+  mySwitch.enableTransmit(10);
 
   for (i = 0; i < 4; i++) {
     pinMode(leds[i], OUTPUT);
@@ -75,8 +76,12 @@ void setup() {
   wdt_enable(WDTO_500MS);
 }
 
+
+char tmp = 0;
 void send_data() {
-  Serial.println(list_to_char(ledStt), BIN);
+  tmp = list_to_char(ledStt);
+  Serial.println(tmp, BIN);
+  mySwitch.send(tmp);
 }
 
 
