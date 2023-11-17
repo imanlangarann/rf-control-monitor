@@ -2,9 +2,9 @@
 
 ## TODOs
 
-- add remote address to EEPROM.
-- connect push button to add new remote.
-- remove remote.
+- read from EEPROM.
+- write to EEPROM.
+- send data ...
 
 ## Button
 
@@ -17,4 +17,6 @@ commit notes:
 added debunce to read command function
 implement functionality to LEDs
 filter remotes 
+connect push button to add new remote.
+remove remote.
 -->
