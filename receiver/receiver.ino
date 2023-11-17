@@ -27,6 +27,20 @@ unsigned long lastDebounceTime = 0;
 unsigned long startLongPress = 0;
 
 
+
+short key = 0;
+unsigned long remote_val = 0;
+
+long last_sig = 0;
+
+bool isPressed = false, isLongPressed = false;
+
+
+long last_on = 0;
+bool indicator_stt = 1;
+bool blink_num = 0;
+
+
 RCSwitch mySwitch = RCSwitch();
 short dec2binWzerofill(unsigned long *Dec);
 void checkIndicator();
@@ -51,28 +65,22 @@ void setup() {
   /////////////////////////////////////////////////////
 
   pinMode(indicator, OUTPUT);
+  digitalWrite(indicator, indicator_stt);
   pinMode(btn, INPUT_PULLUP);
 
   Serial.println("setup...");
 
+  // Serial.println(list_to_char(ledStt),DEC);
+
   wdt_enable(WDTO_500MS);
+}
+
+void send_data() {
+  Serial.println(list_to_char(ledStt), BIN);
 }
 
 
 
-
-
-short key = 0;
-unsigned long remote_val = 0;
-
-long last_sig = 0;
-
-bool isPressed = false, isLongPressed = false;
-
-
-long last_on = 0;
-bool indicator_stt = 0;
-bool blink_num = 0;
 
 void loop() {
 
@@ -99,7 +107,7 @@ void loop() {
       startLongPress = millis();
       digitalWrite(indicator, 1);
       while (millis() - startLongPress < 3000) {
-        
+
         wdt_reset();
 
         isPressed = false;
@@ -127,6 +135,10 @@ void loop() {
         if (is_valid_addr(remote_val)) {
           ledStt[key] = !ledStt[key];
           digitalWrite(leds[key], ledStt[key]);
+
+          last_on = millis();
+          indicator_stt = 1;
+          send_data();
         }
 
         Serial.print("Address: ");
@@ -256,7 +268,16 @@ void loop() {
 
 
   wdt_reset();
+}
 
+
+char list_to_char(bool *list) {
+  char result = 0;
+  for (int i = 0; i < 4; i++) {
+    if (list[i] == true)
+      result |= (1 << i);
+  }
+  return result;
 }
 
 
@@ -324,7 +345,7 @@ void checkBtn(bool *isPressed, bool *isLongPressed) {
 bool is_valid_addr(unsigned long remoteAddress) {
   if (remoteAddress == 0) return false;
 
-  for (i = 0 ; i < number_of_addresses ; i++) {
+  for (i = 0; i < number_of_addresses; i++) {
     if (rmAddrs[i] == remoteAddress)
       return true;
   }
@@ -366,9 +387,10 @@ void remove_all_address() {
 void checkIndicator() {
   switch (mode) {
     case read:
-      if (millis() - last_on > 8000 && !indicator_stt) {
+      if (millis() - last_on > 5000 && !indicator_stt) {
         last_on = millis();
         indicator_stt = 1;
+        send_data();
       }
       if (millis() - last_on > 100 && indicator_stt) {
         last_on = millis();
