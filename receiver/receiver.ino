@@ -6,6 +6,7 @@
 #define btn_debaunce 50
 #define input_signal_debaunce 150
 #define long_press_debaunce 5000
+#define number_of_addresses 10
 
 enum mode { read,
             learn,
@@ -14,7 +15,7 @@ enum mode { read,
 
 short leds[] = { 4, 5, 6, 7 };
 bool ledStt[] = { 0, 0, 0, 0 };
-unsigned long rmAddrs[10] = { 21532 };
+unsigned long rmAddrs[number_of_addresses] = { 21532 };
 
 bool btnState = true;
 bool lastBtnState = true;
@@ -47,6 +48,7 @@ void setup() {
   pinMode(btn, INPUT_PULLUP);
 
   Serial.println("setup...");
+
 }
 
 short key = 0;
@@ -55,6 +57,11 @@ unsigned long remote_val = 0;
 long last_sig = 0;
 
 bool isPressed = false, isLongPressed = false;
+
+
+long last_on = 0;
+bool indicator_stt = 0;
+bool blink_num = 0;
 
 void loop() {
 
@@ -85,11 +92,14 @@ void loop() {
         checkBtn(&isPressed, &isLongPressed);
         if (isPressed) {
           goto_mode(forget);
+          startLongPress = millis();
           break;
         }
       }
-      if (mode == read)
+      if (mode == read) {
         goto_mode(learn);
+        startLongPress = millis();
+      }
       digitalWrite(indicator, 0);
     }
 
@@ -115,6 +125,124 @@ void loop() {
       }
 
       mySwitch.resetAvailable();
+    }
+  }
+
+  else if (mode == forget) {
+
+    checkIncativity();
+
+    isPressed = false;
+    checkBtn(&isPressed, &isLongPressed);
+    if (isPressed) {
+      // goto_mode(forgetAll);
+      while (!digitalRead(btn)) {
+
+        isLongPressed = false;
+        checkBtn(&isPressed, &isLongPressed);
+        if (isLongPressed) {
+          Serial.println("forget all");  //forget all function
+          remove_all_address();
+          digitalWrite(indicator, 1);
+          while (!digitalRead(btn))
+            ;
+          digitalWrite(indicator, 0);
+          goto_mode(read);
+          break;
+        }
+
+        if (millis() - last_on > 100) {
+          last_on = millis();
+
+          indicator_stt = !indicator_stt;
+        }
+        digitalWrite(indicator, indicator_stt);
+        delay(btn_debaunce);
+      }
+
+
+      if (mode == forget) {
+        goto_mode(read);
+      }
+    }
+
+    if (mySwitch.available()) {
+      if (millis() - last_sig > input_signal_debaunce) {
+        last_sig = millis();
+
+        remote_val = mySwitch.getReceivedValue();
+        key = dec2binWzerofill(&remote_val);
+
+        // rmAddrs.remove(remote_val);  ////////////////////////////////////////////////
+        remove_address(remote_val);
+        Serial.println("remote removed.");
+        goto_mode(read);
+
+        Serial.print("Address: ");
+        Serial.print(remote_val);
+        Serial.print(" - key: ");
+        Serial.println(key);
+
+      } else {
+        last_sig = millis();
+      }
+
+      mySwitch.resetAvailable();
+    }
+
+  }
+
+  else if (mode == learn) {
+    checkIncativity();
+
+    isPressed = false;
+    checkBtn(&isPressed, &isLongPressed);
+    if (isPressed) {
+      while (!digitalRead(btn)) {
+        if (millis() - last_on > 100) {
+          last_on = millis();
+
+          indicator_stt = !indicator_stt;
+        }
+        digitalWrite(indicator, indicator_stt);
+        delay(btn_debaunce);
+      }
+
+      goto_mode(read);
+    }
+
+    if (mySwitch.available()) {
+      if (millis() - last_sig > input_signal_debaunce) {
+        last_sig = millis();
+
+        remote_val = mySwitch.getReceivedValue();
+        key = dec2binWzerofill(&remote_val);
+
+        // rmAddrs.add(remote_val);  ////////////////////////////////////////////////
+        add_address(remote_val);
+        Serial.println("remote added.");
+        goto_mode(read);
+
+        Serial.print("Address: ");
+        Serial.print(remote_val);
+        Serial.print(" - key: ");
+        Serial.println(key);
+
+      } else {
+        last_sig = millis();
+      }
+
+      mySwitch.resetAvailable();
+    }
+  }
+}
+
+
+void checkIncativity() {
+  if (mode == learn || mode == forget) {
+    // Serial.println((millis() - startLongPress));
+    if (millis() - startLongPress > 30000) {
+      goto_mode(read);
     }
   }
 }
@@ -174,18 +302,41 @@ void checkBtn(bool *isPressed, bool *isLongPressed) {
 bool is_valid_addr(unsigned long remoteAddress) {
   if (remoteAddress == 0) return false;
 
-  for (unsigned long i : rmAddrs) {
-    if (i == remoteAddress)
+  for (i = 0 ; i < number_of_addresses ; i++) {
+    if (rmAddrs[i] == remoteAddress)
       return true;
   }
   return false;
 }
 
+void add_address(unsigned long new_address) {
+  if (!is_valid_addr(new_address)) {
+    for (i = 0; i < number_of_addresses; i++) {
+      if (rmAddrs[i] == 0) {
+        rmAddrs[i] = new_address;
+        break;
+      }
+    }
+  }
+}
+
+void remove_address(unsigned long remote_address) {
+  for (i = 0; i < number_of_addresses; i++) {
+    if (rmAddrs[i] == remote_address) {
+      rmAddrs[i] = 0;
+      break;
+    }
+  }
+}
+
+void remove_all_address() {
+  for (byte i = 0; i < number_of_addresses; i++) {
+    rmAddrs[i] = 0;
+  }
+}
 
 
-long last_on = 0;
-bool indicator_stt = 0;
-bool blink_num = 0;
+
 
 void checkIndicator() {
   switch (mode) {
@@ -202,7 +353,7 @@ void checkIndicator() {
       break;
 
     case learn:
-      if (millis() - last_on > 1000 && !indicator_stt) {
+      if (millis() - last_on > 800 && !indicator_stt) {
         last_on = millis();
         indicator_stt = 1;
       }
