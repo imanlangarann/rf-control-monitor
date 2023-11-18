@@ -34,7 +34,7 @@ unsigned long remote_val = 0;
 long last_sig = 0;
 
 bool isPressed = false, isLongPressed = false;
-
+bool should_send = false;
 
 long last_on = 0;
 bool indicator_stt = 1;
@@ -54,7 +54,9 @@ void setup() {
 
   Serial.begin(9600);
   mySwitch.enableReceive(0);
-  mySwitch.enableTransmit(10);
+  mySwitch.enableTransmit(9);
+  mySwitch.setProtocol(2);
+  mySwitch.setRepeatTransmit(4);
 
   for (i = 0; i < 4; i++) {
     pinMode(leds[i], OUTPUT);
@@ -72,6 +74,8 @@ void setup() {
   Serial.println("setup...");
 
   // Serial.println(list_to_char(ledStt),DEC);
+  // mySwitch.send("000000000001010100010001");
+  send_data();
 
   wdt_enable(WDTO_500MS);
 }
@@ -81,7 +85,8 @@ char tmp = 0;
 void send_data() {
   tmp = list_to_char(ledStt);
   Serial.println(tmp, BIN);
-  mySwitch.send(tmp);
+  mySwitch.send(tmp, 8);
+  // mySwitch.send(0b10000,5);
 }
 
 
@@ -141,9 +146,11 @@ void loop() {
           ledStt[key] = !ledStt[key];
           digitalWrite(leds[key], ledStt[key]);
 
-          last_on = millis();
-          indicator_stt = 1;
-          send_data();
+          // last_on = millis();
+          // indicator_stt = 1;
+          should_send = true;
+          // delay(input_signal_debaunce);
+          // send_data();
         }
 
         Serial.print("Address: ");
@@ -156,6 +163,16 @@ void loop() {
       }
 
       mySwitch.resetAvailable();
+      if (should_send) {
+        should_send = false;
+
+        delay(input_signal_debaunce);
+        wdt_reset();
+        delay(input_signal_debaunce);
+        wdt_reset();
+        /// add wdt of reset
+        send_data();
+      }
     }
   }
 
@@ -277,8 +294,8 @@ void loop() {
 
 
 char list_to_char(bool *list) {
-  char result = 0;
-  for (int i = 0; i < 4; i++) {
+  char result = 80;  // => address:5
+  for (i = 0; i < 4; i++) {
     if (list[i] == true)
       result |= (1 << i);
   }
@@ -392,7 +409,7 @@ void remove_all_address() {
 void checkIndicator() {
   switch (mode) {
     case read:
-      if (millis() - last_on > 5000 && !indicator_stt) {
+      if (millis() - last_on > 3000 && !indicator_stt) {
         last_on = millis();
         indicator_stt = 1;
         send_data();

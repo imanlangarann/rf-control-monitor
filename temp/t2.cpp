@@ -2,11 +2,11 @@
 #include <bitset>
 using namespace std;
 
-bool ledStt[] = {1, 0, 1, 1};
+bool ledStt[] = {0, 0, 0, 0};
 
 char list_to_char(bool *list)
 {
-    char result = 0;
+    char result = 16;
     for (int i = 0; i < 4; i++)
     {
         if (list[i] == true)
@@ -49,3 +49,5 @@ int main()
 
     return 0;
 }
+
+//////////// 0,0,0,0 -> 10000   
