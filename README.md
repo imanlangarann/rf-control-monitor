@@ -11,7 +11,7 @@
 
 here is the funtionality diagram for external button:
 
-![button-functionality](button.drawio.png)
+![button-functionality](./Pics/button.drawio.png)
 
 <!-- 
 commit notes:
